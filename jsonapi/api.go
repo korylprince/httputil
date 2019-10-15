@@ -3,6 +3,7 @@ package jsonapi
 import (
 	"database/sql"
 	"io"
+	"net/http"
 
 	"github.com/gorilla/mux"
 	"github.com/korylprince/httputil/auth"
@@ -16,6 +17,11 @@ type APIRouter struct {
 	auth         auth.Auth
 	sessionStore session.Store
 	hook         AuthHookFunc
+}
+
+//ServeHTTP implements the http.Handler interface
+func (r *APIRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	r.mux.ServeHTTP(w, req)
 }
 
 //Handle registers a ReturnHandlerFunc with the given parameters
