@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"io"
 	"net/http"
+	"reflect"
+	"runtime"
 
 	"github.com/gorilla/mux"
 	"github.com/korylprince/httputil/auth"
@@ -25,7 +27,9 @@ func (r *APIRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 //Handle registers a ReturnHandlerFunc with the given parameters
-func (r *APIRouter) Handle(method, path, action string, handler ReturnHandlerFunc, auth bool) {
+func (r *APIRouter) Handle(method, path string, handler ReturnHandlerFunc, auth bool) {
+	action := runtime.FuncForPC(reflect.ValueOf(handler).Pointer()).Name()
+
 	if auth {
 		handler = withAuth(r.sessionStore, r.hook, handler)
 	}
@@ -34,12 +38,21 @@ func (r *APIRouter) Handle(method, path, action string, handler ReturnHandlerFun
 		withLogging(action, r.output,
 			withJSONResponse(
 				handler)))
-
 }
 
 //HandleTX registers a TXReturnHandlerFunc with the given parameters
-func (r *APIRouter) HandleTX(method, path, action string, db *sql.DB, handler TXReturnHandlerFunc, auth bool) {
-	r.Handle(method, path, action, WithTX(db, handler), auth)
+func (r *APIRouter) HandleTX(method, path string, db *sql.DB, handler TXReturnHandlerFunc, auth bool) {
+	action := runtime.FuncForPC(reflect.ValueOf(handler).Pointer()).Name()
+
+	rHandler := WithTX(db, handler)
+	if auth {
+		rHandler = withAuth(r.sessionStore, r.hook, rHandler)
+	}
+
+	r.mux.Methods(method).Path(path).Handler(
+		withLogging(action, r.output,
+			withJSONResponse(
+				rHandler)))
 }
 
 //New returns a new APIRouter
@@ -52,6 +65,6 @@ func New(output io.Writer, auth auth.Auth, store session.Store, hook AuthHookFun
 		hook:         hook,
 	}
 	r.mux.NotFoundHandler = NotFoundJSONHandler
-	r.Handle("POST", "/auth", "Authenticate", r.authenticate, false)
+	r.Handle("POST", "/auth", r.authenticate, false)
 	return r
 }
