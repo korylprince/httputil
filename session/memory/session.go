@@ -10,7 +10,7 @@ import (
 )
 
 type memorySession struct {
-	session *session.Session
+	session session.Session
 	expires time.Time
 }
 
@@ -49,7 +49,7 @@ func New(duration time.Duration) *Store {
 
 //Create returns a new session ID for the given session.
 //The returned error will always be nil.
-func (s *Store) Create(sess *session.Session) (string, error) {
+func (s *Store) Create(sess session.Session) (string, error) {
 	id, err := uuid.NewV4()
 	if err != nil {
 		return "", err
@@ -65,7 +65,7 @@ func (s *Store) Create(sess *session.Session) (string, error) {
 
 //Read returns the session for the given id or nil if it doesn't exist.
 //The returned error will always be nil.
-func (s *Store) Read(id string) (*session.Session, error) {
+func (s *Store) Read(id string) (session.Session, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if sess, ok := s.store[id]; ok {
