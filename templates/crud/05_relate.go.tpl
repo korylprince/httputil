@@ -74,5 +74,28 @@ func Unrelate{{$name}}{{$fname}}(r *http.Request, tx *sql.Tx) (int, interface{})
 
 	return http.StatusOK, nil
 }
+
+func Read{{$name}}{{$fname}}s(r *http.Request, tx *sql.Tx) (int, interface{}) {
+    vars := mux.Vars(r)
+
+    vars[{{$pkg}}.{{$name}}Columns.ID] = vars["{{.JoinLocalColumn}}"] 
+    delete(vars, "{{.JoinLocalColumn}}")
+    code, v := Read{{$name}}(r, tx)
+    if err, ok := v.(error); ok {
+        return code, err
+    }
+    {{$table.Name}} := v.(*{{$pkg}}.{{$name}})
+
+    {{.ForeignTable}}s, err := {{$table.Name}}.{{$fname}}s().All(r.Context(), tx)
+    if err != nil {
+        return http.StatusInternalServerError, fmt.Errorf("Unable to read {{$name}} {{$fname}}s: %v", err)
+    }
+
+    if {{.ForeignTable}}s == nil {
+        return http.StatusOK, {{$pkg}}.{{$fname}}Slice{}
+    }
+
+	return http.StatusOK, {{.ForeignTable}}s
+}
 {{end}}
 {{end}}
