@@ -60,5 +60,9 @@ func Query{{$name}}s(r *http.Request, tx *sql.Tx) (int, interface{}) {
 		return http.StatusInternalServerError, fmt.Errorf("Unable to query {{$name}}s: %v", err)
 	}
 
+    if {{$table.Name}}s == nil {
+        return http.StatusOK, {{$pkg}}.{{$name}}Slice{}
+    }
+
 	return http.StatusOK, {{$table.Name}}s
 }
