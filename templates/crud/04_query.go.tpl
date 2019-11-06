@@ -15,6 +15,13 @@ func Query{{$name}}s(r *http.Request, tx *sql.Tx) (int, interface{}) {
     {{range $idx, $fkey := $table.FKeys}}
     {{if eq $idx 0}}if{{else}}} else if{{end}}
     fid := vars[{{$pkg}}.{{$name}}Columns.{{index $alias.Columns .Column}}]; fid != "" {
+        vars[{{$pkg}}.{{$name}}Columns.ID] = fid
+        delete(vars, {{$pkg}}.{{$name}}Columns.{{index $alias.Columns .Column}})
+        code, {{.ForeignTable}} := Read{{($aliases.Table .ForeignTable).UpSingular}}(r, tx)
+        if err, ok := {{.ForeignTable}}.(error); ok {
+            return code, err
+        }
+        vars[{{$pkg}}.{{$name}}Columns.{{index $alias.Columns .Column}}] = fid
         mods = append(mods, qm.Where("{{$fkey.Column}} = ?", fid))
     {{- end -}}
     }
