@@ -37,6 +37,8 @@ func Create{{$name}}(r *http.Request, tx *sql.Tx) (int, interface{}) {
             return http.StatusConflict, fmt.Errorf("Unable to insert duplicate {{$name}}: %v", err)
         } else if strings.Contains(err.Error(), "value too long for type character varying") {
             return http.StatusBadRequest, fmt.Errorf("Unable to insert invalid {{$name}}: %v", err)
+        } else if strings.Contains(err.Error(), "violates check constraint") {
+            return http.StatusBadRequest, fmt.Errorf("Unable to insert invalid {{$name}}: %v", err)
         } else if strings.Contains(err.Error(), "invalid input syntax for type uuid") {
             return http.StatusBadRequest, fmt.Errorf("Unable to insert invalid {{$name}}: %v", err)
         } else if strings.Contains(err.Error(), "violates foreign key constraint") {
