@@ -3,9 +3,9 @@ package ad
 import (
 	"fmt"
 
+	ldap "github.com/go-ldap/ldap/v3"
+	adauth "github.com/korylprince/go-ad-auth/v3"
 	"github.com/korylprince/httputil/session"
-	adauth "gopkg.in/korylprince/go-ad-auth.v2"
-	ldap "gopkg.in/ldap.v3"
 )
 
 //User represents an Active Directory User
@@ -38,13 +38,13 @@ func New(config *adauth.Config, attrs, groups []string) *Auth {
 			return &Auth{config: config, attrs: attrs, groups: groups}
 		}
 	}
+
 	return &Auth{config: config, attrs: append(attrs, "displayName"), groups: groups}
 }
 
 //Authenticate authenticates the given credentials and returns the User associated with the account if successful,
 //or nil if not. If an error occurs it is returned.
 func (a *Auth) Authenticate(username, password string) (user session.Session, err error) {
-
 	status, entry, groups, err := adauth.AuthenticateExtended(a.config, username, password, a.attrs, a.groups)
 	if err != nil {
 		return nil, fmt.Errorf("Error attempting to authenticate as %s: %v", username, err)
